@@ -275,7 +275,7 @@
   </distributionManagement>
 
   <properties>
-    <version.kafka.clients>1.0.0</version.kafka.clients>
+    <version.kafka.clients>1.0.2</version.kafka.clients>
     <version.kafka.scala>2.11</version.kafka.scala>
     <version.debezium>0.7.5</version.debezium>
     <maven.compiler.source>1.8</maven.compiler.source>
