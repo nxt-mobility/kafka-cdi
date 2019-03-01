@@ -4,9 +4,9 @@
           xmlns="http://maven.apache.org/SETTINGS/1.1.0">
     <servers>
         <server>
+            <id>nxt</id>
             <username>${env.MAVEN_REPO_USER}</username>
             <password>${env.MAVEN_REPO_PASS}</password>
-            <id>occ-prod</id>
         </server>
     </servers>
 </settings>

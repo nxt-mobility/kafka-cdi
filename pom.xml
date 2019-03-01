@@ -237,9 +237,9 @@
 
   <repositories>
     <repository>
-        <id>occ-prod</id>
-        <name>OCC Azure Nexus</name>
-        <url>https://nexus.imobility.azure.altemista.cloud/content/repositories/occ-prod-snapshots</url>
+        <id>nxt</id>
+        <name>NXT Mobility Nexus</name>
+        <url>https://nexus.imobility.azure.altemista.cloud/content/repositories/nxt-snapshots</url>
       <releases>
         <enabled>false</enabled>
       </releases>
@@ -251,12 +251,12 @@
 
   <distributionManagement>
     <snapshotRepository>
-        <id>occ-prod</id>
-        <url>https://nexus.imobility.azure.altemista.cloud/content/repositories/occ-prod-snapshots/</url>
+        <id>nxt</id>
+        <url>https://nexus.imobility.azure.altemista.cloud/content/repositories/nxt-snapshots/</url>
     </snapshotRepository>
     <repository>
-        <id>occ-prod</id>
-        <url>https://nexus.imobility.azure.altemista.cloud/content/repositories/occ-prod-releases/</url>
+        <id>nxt</id>
+        <url>https://nexus.imobility.azure.altemista.cloud/content/repositories/nxt-releases/</url>
     </repository>
   </distributionManagement>
 
