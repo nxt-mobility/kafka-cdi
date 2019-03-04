@@ -80,7 +80,7 @@ public class KafkaExtension<X> implements Extension {
         // we just do the first
         if (kafkaConfig != null && bootstrapServers == null) {
             logger.info("setting bootstrap.servers IP for, {}", kafkaConfig.bootstrapServers());
-            bootstrapServers = VerySimpleEnvironmentResolver.simpleBootstrapServerResolver(kafkaConfig.bootstrapServers());
+            bootstrapServers = VerySimpleEnvironmentResolver.resolveVariables(kafkaConfig.bootstrapServers());
         }
     }
 

@@ -15,43 +15,26 @@
  */
 package org.aerogear.kafka.cdi.extension;
 
-import java.util.Arrays;
-import java.util.List;
-import java.util.stream.Collectors;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class VerySimpleEnvironmentResolver {
+
+    //#{VARIABLE_NAME}
+    private static final Pattern PATTERN = Pattern.compile("(#[{]([^}]+)[}])");
 
     private VerySimpleEnvironmentResolver() {
         // no-op
     }
 
-    //#{KAFKA_SERVICE_HOST}:#{KAFKA_SERVICE_PORT}
-
-    public static String simpleBootstrapServerResolver(final String rawExpression) {
-
-        if (rawExpression.startsWith("#{")) {
-
-            final List<String> expressionParts = Arrays.asList(rawExpression.split(":"));
-
-            final List<String> variables = expressionParts.stream()
-                    .map(expression -> (expression.substring(2, expression.length() - 1)))
-                    .collect(Collectors.toList());
-
-            // check if we have host:port or just one variable:
-            if (variables.size() == 1) {
-                return resolve(variables.get(0));
-            } else if (variables.size() == 2) {
-                // we have host:port
-                final StringBuilder sb = new StringBuilder()
-                        .append(resolve(variables.get(0)))
-                        .append(":")
-                        .append(resolve(variables.get(1)));
-
-                return sb.toString();
-            }
+    //#{KAFKA_SERVICE_HOST}:#{KAFKA_SERVICE_PORT} --> localhost:9090
+    public static String resolveVariables(final String rawExpression) {
+        Matcher m = PATTERN.matcher(rawExpression);
+        String result = rawExpression;
+        while (m.find()) {
+            result = result.replace(m.group(1), resolve(m.group(2)));
         }
-        return rawExpression;
-
+        return result;
     }
 
     private static String resolve(final String variable) {

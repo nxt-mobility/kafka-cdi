@@ -34,7 +34,7 @@ public class ResolverTest {
     @Test
     public void resolveSingleExpression() {
 
-    final String resolvedURI = VerySimpleEnvironmentResolver.simpleBootstrapServerResolver("#{SINGLE}");
+        final String resolvedURI = VerySimpleEnvironmentResolver.resolveVariables("#{SINGLE}");
     assertThat(resolvedURI).isEqualTo("localhost:9092");
 
     }
@@ -42,18 +42,26 @@ public class ResolverTest {
     @Test
     public void resolveDoubleExpression() {
 
-        final String resolvedURI = VerySimpleEnvironmentResolver.simpleBootstrapServerResolver("#{MY_HOST}:#{MY_PORT}");
+        final String resolvedURI = VerySimpleEnvironmentResolver.resolveVariables("#{MY_HOST}:#{MY_PORT}");
         assertThat(resolvedURI).isEqualTo("localhost:9092");
     }
 
     @Test
+    public void resolveMultipleExpressions() {
+
+        final String resolvedURI = VerySimpleEnvironmentResolver.resolveVariables("This connects to host #{MY_HOST} port #{MY_PORT}, same as #{MY_PORT}");
+        assertThat(resolvedURI).isEqualTo("This connects to host localhost port 9092, same as 9092");
+    }
+
+
+    @Test
     public void resolveNoExpression() {
-        final String resolvedURI = VerySimpleEnvironmentResolver.simpleBootstrapServerResolver("localhost:9092");
+        final String resolvedURI = VerySimpleEnvironmentResolver.resolveVariables("localhost:9092");
         assertThat(resolvedURI).isEqualTo("localhost:9092");
     }
 
     @Test(expected = RuntimeException.class)
     public void canNotResolve() {
-        VerySimpleEnvironmentResolver.simpleBootstrapServerResolver("#{LOL}");
+        VerySimpleEnvironmentResolver.resolveVariables("#{LOL}");
     }
 }

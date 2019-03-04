@@ -108,10 +108,10 @@ public class DelegationKafkaConsumer implements Runnable {
         final Consumer consumerAnnotation = annotatedMethod.getAnnotation(Consumer.class);
 
         this.topics = Arrays.stream(consumerAnnotation.topics())
-                .map(VerySimpleEnvironmentResolver::simpleBootstrapServerResolver)
+                .map(VerySimpleEnvironmentResolver::resolveVariables)
                 .collect(Collectors.toList());
 
-        final String groupId = VerySimpleEnvironmentResolver.simpleBootstrapServerResolver(consumerAnnotation.groupId());
+        final String groupId = VerySimpleEnvironmentResolver.resolveVariables(consumerAnnotation.groupId());
         final Class<?> recordKeyType = consumerAnnotation.keyType();
 
         this.annotatedListenerMethod = annotatedMethod;
