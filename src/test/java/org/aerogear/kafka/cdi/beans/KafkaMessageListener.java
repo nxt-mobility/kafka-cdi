@@ -15,9 +15,11 @@
  */
 package org.aerogear.kafka.cdi.beans;
 
+import org.aerogear.kafka.cdi.ReceiveMessageFromInjectedServiceTest;
 import org.aerogear.kafka.cdi.annotation.Consumer;
 import org.aerogear.kafka.cdi.annotation.ForTopic;
 import org.aerogear.kafka.cdi.beans.mock.MessageReceiver;
+import org.aerogear.kafka.cdi.proto.AddressBookProtos;
 import org.apache.kafka.common.header.Headers;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -25,8 +27,7 @@ import org.slf4j.LoggerFactory;
 import javax.annotation.PostConstruct;
 import javax.inject.Inject;
 
-import static org.aerogear.kafka.cdi.ReceiveMessageFromInjectedServiceTest.EXTENDED_PRODUCER_TOPIC_NAME;
-import static org.aerogear.kafka.cdi.ReceiveMessageFromInjectedServiceTest.SIMPLE_PRODUCER_TOPIC_NAME;
+import static org.aerogear.kafka.cdi.ReceiveMessageFromInjectedServiceTest.*;
 
 public class KafkaMessageListener {
 
@@ -38,6 +39,10 @@ public class KafkaMessageListener {
     @Inject
     @ForTopic(EXTENDED_PRODUCER_TOPIC_NAME)
     private MessageReceiver extendedTopicReceiver;
+
+    @Inject
+    @ForTopic(PROTO_PRODUCER_TOPIC_NAME)
+    private MessageReceiver protoTopicReceiver;
 
     private final Logger logger = LoggerFactory.getLogger(KafkaMessageListener.class);
 
@@ -64,5 +69,13 @@ public class KafkaMessageListener {
     public void onMessage(final Integer key, final String simplePayload, final Headers headers) {
         logger.info("Got message: {}||{}||{} ",key, simplePayload, headers);
         extendedTopicReceiver.ack(key, simplePayload, headers);
+    }
+
+
+
+    @Consumer(topics = {ReceiveMessageFromInjectedServiceTest.PROTO_PRODUCER_TOPIC_NAME}, groupId = "FRANZ_KAFKA_FANGROUP")
+    public void onMessage(AddressBookProtos.Person person) {
+        logger.info("Got message: {} ",person.getName());
+        protoTopicReceiver.ack(null, person, null);
     }
 }

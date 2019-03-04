@@ -21,5 +21,5 @@ public interface MessageReceiver {
 
     void ack();
 
-    void ack(Integer key, String value, Headers expectedHeaders);
+    void ack(Integer key, Object value, Headers expectedHeaders);
 }

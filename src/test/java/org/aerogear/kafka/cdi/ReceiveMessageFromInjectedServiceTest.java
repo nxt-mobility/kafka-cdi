@@ -15,17 +15,15 @@
  */
 package org.aerogear.kafka.cdi;
 
-import org.aerogear.kafka.cdi.beans.KafkaService;
 import org.aerogear.kafka.cdi.annotation.ForTopic;
+import org.aerogear.kafka.cdi.beans.KafkaService;
+import org.aerogear.kafka.cdi.beans.ProtoUsingKafkaService;
 import org.aerogear.kafka.cdi.beans.mock.MessageReceiver;
 import org.aerogear.kafka.cdi.beans.mock.MockProvider;
+import org.aerogear.kafka.cdi.proto.AddressBookProtos;
 import org.aerogear.kafka.cdi.tests.AbstractTestBase;
 import org.aerogear.kafka.cdi.tests.KafkaClusterTestBase;
-import org.apache.kafka.clients.consumer.ConsumerConfig;
-import org.apache.kafka.clients.consumer.ConsumerRecord;
-import org.apache.kafka.clients.consumer.ConsumerRecords;
-import org.apache.kafka.clients.consumer.KafkaConsumer;
-import org.apache.kafka.clients.consumer.OffsetResetStrategy;
+import org.apache.kafka.clients.consumer.*;
 import org.apache.kafka.common.header.Header;
 import org.apache.kafka.common.header.Headers;
 import org.apache.kafka.common.header.internals.RecordHeader;
@@ -37,12 +35,12 @@ import org.jboss.shrinkwrap.api.spec.JavaArchive;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
-
 import java.nio.charset.Charset;
 import java.util.Arrays;
 import java.util.List;
@@ -56,6 +54,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 public class ReceiveMessageFromInjectedServiceTest extends KafkaClusterTestBase {
 
     public static final String SIMPLE_PRODUCER_TOPIC_NAME = "ServiceInjectionTest.SimpleProducer";
+    public static final String PROTO_PRODUCER_TOPIC_NAME = "ServiceInjectionTest.ProtoProducer";
     public static final String EXTENDED_PRODUCER_TOPIC_NAME = "ServiceInjectionTest.ExtendedProducer";
 
     private final Logger logger = LoggerFactory.getLogger(ReceiveMessageFromInjectedServiceTest.class);
@@ -71,9 +70,13 @@ public class ReceiveMessageFromInjectedServiceTest extends KafkaClusterTestBase 
     @Inject
     private KafkaService service;
 
+    @Inject
+    private ProtoUsingKafkaService protoService;
+
     @BeforeClass
     public static void createTopic() {
         kafkaCluster.createTopics(SIMPLE_PRODUCER_TOPIC_NAME);
+        kafkaCluster.createTopics(PROTO_PRODUCER_TOPIC_NAME);
         kafkaCluster.createTopics(EXTENDED_PRODUCER_TOPIC_NAME);
     }
 
@@ -107,6 +110,18 @@ public class ReceiveMessageFromInjectedServiceTest extends KafkaClusterTestBase 
         Thread.sleep(2000);
 
         Mockito.verify(receiver, Mockito.times(1)).ack();
+    }
+
+    @Test
+    public void testSendAndReceiveProto(@ForTopic(PROTO_PRODUCER_TOPIC_NAME) MessageReceiver receiver) throws Exception {
+        ArgumentCaptor<AddressBookProtos.Person> personCaptor = ArgumentCaptor.forClass(AddressBookProtos.Person.class);
+        protoService.sendMessage();
+        Thread.sleep(2000);
+        Mockito.verify(receiver, Mockito.times(1)).ack(Mockito.any(), personCaptor.capture(), Mockito.any());
+        assertEquals("Franz Kafka", personCaptor.getValue().getName());
+    }
+
+    private void assertEquals(String franz_kafka, String name) {
     }
 
     @Test

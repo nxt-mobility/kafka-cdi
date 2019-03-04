@@ -15,6 +15,7 @@
  */
 package org.aerogear.kafka.serialization;
 
+import com.google.protobuf.GeneratedMessageV3;
 import org.apache.kafka.common.serialization.Serde;
 import org.apache.kafka.common.serialization.Serdes;
 import org.slf4j.Logger;
@@ -48,6 +49,10 @@ public class CafdiSerdes extends Serdes {
             return (Serde<T>) JsonObject();
         }
 
+        if(GeneratedMessageV3.class.isAssignableFrom(type)){
+            return (Serde<T>) new ProtoSerde(type);
+        }
+
         // look up default Kafka SerDes
         // if the class type is not supported an exception is thrown
         try {
@@ -69,6 +74,12 @@ public class CafdiSerdes extends Serdes {
     static public final class GenericSerde<T> extends WrapperSerde<T> {
         public GenericSerde(Class<T> type) {
             super(new GenericSerializer<T>(type), new GenericDeserializer<T>(type));
+        }
+    }
+
+    static public final class ProtoSerde<T extends GeneratedMessageV3> extends WrapperSerde<T> {
+        public ProtoSerde(Class<T> type) {
+            super(new ProtoSerializer<T>(), new ProtoDeserializer<T>(type));
         }
     }
 }
