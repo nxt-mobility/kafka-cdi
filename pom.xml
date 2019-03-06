@@ -156,7 +156,14 @@
       <scope>provided</scope>
     </dependency>
 
-    <!-- Apache Kafka libs -->
+      <dependency>
+          <groupId>org.jboss.weld</groupId>
+          <artifactId>weld-api</artifactId>
+          <version>2.4.SP1</version>
+          <scope>compile</scope>
+      </dependency>
+
+      <!-- Apache Kafka libs -->
     <dependency>
       <groupId>org.apache.kafka</groupId>
       <artifactId>kafka-clients</artifactId>

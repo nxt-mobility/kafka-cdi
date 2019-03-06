@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright 2017 Red Hat, Inc, and individual contributors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -25,6 +25,7 @@ import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.kafka.common.errors.SerializationException;
 import org.apache.kafka.common.errors.WakeupException;
+import org.jboss.weld.context.bound.BoundRequestContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -32,12 +33,16 @@ import javax.enterprise.context.spi.CreationalContext;
 import javax.enterprise.inject.spi.AnnotatedMethod;
 import javax.enterprise.inject.spi.Bean;
 import javax.enterprise.inject.spi.BeanManager;
+import javax.enterprise.inject.spi.CDI;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Type;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
@@ -122,8 +127,8 @@ public class DelegationKafkaConsumer implements Runnable {
         properties.put(BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
         properties.put(GROUP_ID_CONFIG, groupId);
         properties.put(AUTO_OFFSET_RESET_CONFIG, consumerAnnotation.offset());
-        properties.put(KEY_DESERIALIZER_CLASS_CONFIG,  CafdiSerdes.serdeFrom(keyTypeClass).deserializer().getClass());
-        properties.put(VALUE_DESERIALIZER_CLASS_CONFIG,CafdiSerdes.serdeFrom(valTypeClass).deserializer().getClass());
+        properties.put(KEY_DESERIALIZER_CLASS_CONFIG, CafdiSerdes.serdeFrom(keyTypeClass).deserializer().getClass());
+        properties.put(VALUE_DESERIALIZER_CLASS_CONFIG, CafdiSerdes.serdeFrom(valTypeClass).deserializer().getClass());
 
         createKafkaConsumer(keyTypeClass, valTypeClass, properties);
         this.consumerRebalanceListener = createConsumerRebalanceListener(consumerAnnotation.consumerRebalanceListener());
@@ -144,21 +149,39 @@ public class DelegationKafkaConsumer implements Runnable {
             while (isRunning()) {
                 final ConsumerRecords<?, ?> records = consumer.poll(100);
                 for (final ConsumerRecord<?, ?> record : records) {
+
+
+                    BeanManager beanManager = CDI.current().getBeanManager();
+
+                    Bean<?> bean = beanManager.resolve(beanManager.getBeans(BoundRequestContext.class));
+                    CreationalContext<Object> creationalContext = beanManager.createCreationalContext(null);
+
                     try {
-                        logger.trace("dispatching payload {} to consumer", record.value());
+                        // Activate CDI request scope for each invocation (works for WELD only)
+                        BoundRequestContext boundRequestContext = (BoundRequestContext) beanManager.getReference(bean, BoundRequestContext.class, creationalContext);
+                        Map<String, Object> requestDataStore = new ConcurrentHashMap<>();
+                        CdiRequestScopeUtils.start(boundRequestContext, requestDataStore);
 
-                        if (annotatedListenerMethod.getJavaMember().getParameterTypes().length == 3) {
-                            annotatedListenerMethod.getJavaMember().invoke(consumerInstance, record.key(), record.value(), record.headers());
-                        } else if (annotatedListenerMethod.getJavaMember().getParameterTypes().length == 2) {
-                            annotatedListenerMethod.getJavaMember().invoke(consumerInstance, record.key(), record.value());
+                        try {
+                            logger.trace("dispatching payload {} to consumer", record.value());
 
-                        } else {
-                            annotatedListenerMethod.getJavaMember().invoke(consumerInstance, record.value());
+                            if (annotatedListenerMethod.getJavaMember().getParameterTypes().length == 3) {
+                                annotatedListenerMethod.getJavaMember().invoke(consumerInstance, record.key(), record.value(), record.headers());
+                            } else if (annotatedListenerMethod.getJavaMember().getParameterTypes().length == 2) {
+                                annotatedListenerMethod.getJavaMember().invoke(consumerInstance, record.key(), record.value());
+
+                            } else {
+                                annotatedListenerMethod.getJavaMember().invoke(consumerInstance, record.value());
+                            }
+                        } finally {
+                            CdiRequestScopeUtils.end(boundRequestContext, requestDataStore);
                         }
 
                         logger.trace("dispatched payload {} to consumer", record.value());
                     } catch (IllegalAccessException | InvocationTargetException e) {
                         logger.error("error dispatching received value to consumer", e);
+                    } finally {
+                        creationalContext.release();
                     }
                 }
             }
