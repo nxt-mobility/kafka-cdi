@@ -12,12 +12,12 @@ public class ProtoSerializer<T extends  GeneratedMessageV3> implements Serialize
     }
 
     @Override
-    public byte[] serialize(String s, GeneratedMessageV3 msg) {
-        return msg.toByteArray();
+    public byte[] serialize(String topic, GeneratedMessageV3 msg) {
+        return msg == null ? null :
+                msg.toByteArray();
     }
 
     @Override
     public void close() {
-
     }
 }
