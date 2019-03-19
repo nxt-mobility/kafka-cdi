@@ -31,4 +31,6 @@ import java.lang.annotation.Target;
 @Documented
 public @interface KafkaConfig {
     String bootstrapServers();
+
+    int consumerRetries() default 0;
 }

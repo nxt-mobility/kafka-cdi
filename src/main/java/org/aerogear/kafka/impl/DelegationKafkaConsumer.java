@@ -17,6 +17,7 @@ package org.aerogear.kafka.impl;
 
 import org.aerogear.kafka.DefaultConsumerRebalanceListener;
 import org.aerogear.kafka.cdi.annotation.Consumer;
+import org.aerogear.kafka.cdi.annotation.KafkaConfig;
 import org.aerogear.kafka.cdi.extension.VerySimpleEnvironmentResolver;
 import org.aerogear.kafka.serialization.CafdiSerdes;
 import org.apache.kafka.clients.consumer.ConsumerRebalanceListener;
@@ -68,6 +69,8 @@ public class DelegationKafkaConsumer implements Runnable {
     private AnnotatedMethod annotatedListenerMethod;
     private ConsumerRebalanceListener consumerRebalanceListener;
 
+    private int numberOfRetries;
+
     public DelegationKafkaConsumer() {
     }
 
@@ -109,12 +112,14 @@ public class DelegationKafkaConsumer implements Runnable {
     }
 
 
-    public void initialize(final String bootstrapServers, final AnnotatedMethod annotatedMethod, final BeanManager beanManager) {
+    public void initialize(final String bootstrapServers, final AnnotatedMethod annotatedMethod, final BeanManager beanManager, final KafkaConfig kafkaConfig) {
         final Consumer consumerAnnotation = annotatedMethod.getAnnotation(Consumer.class);
 
         this.topics = Arrays.stream(consumerAnnotation.topics())
                 .map(VerySimpleEnvironmentResolver::resolveVariables)
                 .collect(Collectors.toList());
+
+        numberOfRetries = kafkaConfig.consumerRetries();
 
         final String groupId = VerySimpleEnvironmentResolver.resolveVariables(consumerAnnotation.groupId());
         final Class<?> recordKeyType = consumerAnnotation.keyType();
@@ -155,31 +160,36 @@ public class DelegationKafkaConsumer implements Runnable {
 
                     Bean<?> bean = beanManager.resolve(beanManager.getBeans(BoundRequestContext.class));
                     CreationalContext<Object> creationalContext = beanManager.createCreationalContext(null);
-
+                    int retries = 0;
+                    boolean success = false;
                     try {
-                        // Activate CDI request scope for each invocation (works for WELD only)
-                        BoundRequestContext boundRequestContext = (BoundRequestContext) beanManager.getReference(bean, BoundRequestContext.class, creationalContext);
-                        Map<String, Object> requestDataStore = new ConcurrentHashMap<>();
-                        CdiRequestScopeUtils.start(boundRequestContext, requestDataStore);
+                        do {
+                            try {
+                                // Activate CDI request scope for each invocation (works for WELD only)
+                                BoundRequestContext boundRequestContext = (BoundRequestContext) beanManager.getReference(bean, BoundRequestContext.class, creationalContext);
+                                Map<String, Object> requestDataStore = new ConcurrentHashMap<>();
+                                CdiRequestScopeUtils.start(boundRequestContext, requestDataStore);
 
-                        try {
-                            logger.trace("dispatching payload {} to consumer", record.value());
-
-                            if (annotatedListenerMethod.getJavaMember().getParameterTypes().length == 3) {
-                                annotatedListenerMethod.getJavaMember().invoke(consumerInstance, record.key(), record.value(), record.headers());
-                            } else if (annotatedListenerMethod.getJavaMember().getParameterTypes().length == 2) {
-                                annotatedListenerMethod.getJavaMember().invoke(consumerInstance, record.key(), record.value());
-
-                            } else {
-                                annotatedListenerMethod.getJavaMember().invoke(consumerInstance, record.value());
+                                try {
+                                    dispatchPayload(record);
+                                    success = true;
+                                } finally {
+                                    CdiRequestScopeUtils.end(boundRequestContext, requestDataStore);
+                                }
+                                logger.trace("dispatched payload {} to consumer", record.value());
+                            } catch (IllegalAccessException e) {
+                                logger.error("error dispatching received value to consumer", e);
+                                break;
+                            } catch (InvocationTargetException e) {
+                                //only log stack trace on last run
+                                if (retries == numberOfRetries) {
+                                    logger.error(String.format("error dispatching received value to consumer, giving up after run %d/%d", retries + 1, numberOfRetries), e);
+                                } else {
+                                    logger.warn(String.format("failed on run %d/%d, will retry: %s", retries + 1, numberOfRetries, e.toString()));
+                                }
+                                retries++;
                             }
-                        } finally {
-                            CdiRequestScopeUtils.end(boundRequestContext, requestDataStore);
-                        }
-
-                        logger.trace("dispatched payload {} to consumer", record.value());
-                    } catch (IllegalAccessException | InvocationTargetException e) {
-                        logger.error("error dispatching received value to consumer", e);
+                        } while (!success && retries <= numberOfRetries);
                     } finally {
                         creationalContext.release();
                     }
@@ -199,6 +209,21 @@ public class DelegationKafkaConsumer implements Runnable {
         } finally {
             logger.info("Close the consumer.");
             consumer.close();
+        }
+    }
+
+    private void dispatchPayload(ConsumerRecord<?, ?> record) throws IllegalAccessException, InvocationTargetException {
+        logger.trace("dispatching payload {} to consumer", record.value());
+
+        final Class<?>[] parameterTypes = annotatedListenerMethod.getJavaMember().getParameterTypes();
+
+        if (parameterTypes.length == 3) {
+            annotatedListenerMethod.getJavaMember().invoke(consumerInstance, record.key(), record.value(), record.headers());
+        } else if (parameterTypes.length == 2) {
+            annotatedListenerMethod.getJavaMember().invoke(consumerInstance, record.key(), record.value());
+
+        } else {
+            annotatedListenerMethod.getJavaMember().invoke(consumerInstance, record.value());
         }
     }
 

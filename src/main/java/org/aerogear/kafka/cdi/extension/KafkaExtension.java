@@ -69,13 +69,14 @@ public class KafkaExtension<X> implements Extension {
     private final Set<DelegationKafkaConsumer> managedConsumers = newSetFromMap(new ConcurrentHashMap<>());
     private final Set<org.apache.kafka.clients.producer.Producer> managedProducers = newSetFromMap(new ConcurrentHashMap<>());
     private final Logger logger = LoggerFactory.getLogger(KafkaExtension.class);
+    private KafkaConfig kafkaConfig;
 
 
     public void kafkaConfig(@Observes @WithAnnotations(KafkaConfig.class) ProcessAnnotatedType<X> pat) {
         logger.trace("Kafka config scanning type: " + pat.getAnnotatedType().getJavaClass().getName());
 
         final AnnotatedType<X> annotatedType = pat.getAnnotatedType();
-        final KafkaConfig kafkaConfig = annotatedType.getAnnotation(KafkaConfig.class);
+        kafkaConfig = annotatedType.getAnnotation(KafkaConfig.class);
 
         // we just do the first
         if (kafkaConfig != null && bootstrapServers == null) {
@@ -120,7 +121,7 @@ public class KafkaExtension<X> implements Extension {
             final DelegationKafkaConsumer frameworkConsumer = (DelegationKafkaConsumer) bm.getReference(bean, DelegationKafkaConsumer.class, ctx);
 
             // hooking it all together
-            frameworkConsumer.initialize(bootstrapServers, consumerMethod, bm);
+            frameworkConsumer.initialize(bootstrapServers, consumerMethod, bm, kafkaConfig);
 
             managedConsumers.add(frameworkConsumer);
             submitToExecutor(frameworkConsumer);
