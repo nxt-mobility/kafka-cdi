@@ -32,11 +32,28 @@ import java.lang.annotation.Target;
 public @interface KafkaConfig {
     String bootstrapServers();
 
-    int consumerRetries() default 0;
+    /**
+     * Default number of retries dispatching calls. {code 0} means no retries.
+     */
+    int defaultConsumerRetries() default 0;
 
+    /**
+     * Default time in milli seconds to backoff between delivery retries.
+     */
+    int defaultConsumerRetryBackoffMs() default 100;
+
+    /**
+     * Represents the kafka configuration property <code>linger.ms</code>.
+     */
     int defaultLingerMs() default -1;
 
+    /**
+     * Represents the kafka configuration property <code>fetch.max.wait.ms</code>.
+     */
     int defaultFetchMaxWaitMs() default -1;
 
+    /**
+     * Represents the kafka configuration property <code>retries</code>.
+     */
     int defaultProducerRetries() default 0;
 }

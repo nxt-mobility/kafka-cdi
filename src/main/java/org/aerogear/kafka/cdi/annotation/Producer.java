@@ -32,12 +32,12 @@ import java.lang.annotation.Target;
 public @interface Producer {
 
     /**
-     * represents the kafka configuration property <code>linger.ms</code>
+     * Represents the kafka configuration property <code>linger.ms</code>.
      */
     int lingerMs() default -1;
 
     /**
-     * represents the kafka configuration property <code>retries</code>
+     * Represents the kafka configuration property <code>retries</code>.
      */
     int retries() default -1;
 

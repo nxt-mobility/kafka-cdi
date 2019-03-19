@@ -40,7 +40,17 @@ public @interface Consumer {
     Class<? extends ConsumerRebalanceListener> consumerRebalanceListener() default DefaultConsumerRebalanceListener.class;
 
     /**
-     * Represents the kafka config property <code>fetch.max.wait.ms</code>
+     * Represents the kafka config property <code>fetch.max.wait.ms</code>. The default value for all consumers can be configured with {@link KafkaConfig#defaultFetchMaxWaitMs()}.
      */
     int fetchMaxWaitMs() default -1;
+
+    /**
+     * Number of retries dispatching calls. {code 0} means no retries. The default value for all consumers can be configured with {@link KafkaConfig#defaultConsumerRetries()}.
+     */
+    int retries() default -1;
+
+    /**
+     * Time in milli seconds to backoff between delivery retries. The default value for all consumers can be configured with {@link KafkaConfig#defaultConsumerRetryBackoffMs()}}.
+     */
+    int retryBackoffMs() default -1;
 }

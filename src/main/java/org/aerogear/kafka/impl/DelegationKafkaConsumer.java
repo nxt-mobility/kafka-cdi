@@ -45,6 +45,7 @@ import java.util.Properties;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.IntPredicate;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -68,6 +69,8 @@ public class DelegationKafkaConsumer implements Runnable {
     private ConsumerRebalanceListener consumerRebalanceListener;
 
     private int numberOfRetries;
+    private long retryBackoffMs;
+
     private Class<?>[] parameterTypes;
     private Type[] genericParameterTypes;
     private ConsumerMode mode;
@@ -124,7 +127,8 @@ public class DelegationKafkaConsumer implements Runnable {
                 .map(VerySimpleEnvironmentResolver::resolveVariables)
                 .collect(Collectors.toList());
 
-        numberOfRetries = kafkaConfig.consumerRetries();
+        numberOfRetries = IntStream.of(consumerAnnotation.retries(), kafkaConfig.defaultConsumerRetries()).filter(v -> v > 0).findFirst().orElse(0);
+        retryBackoffMs = IntStream.of(consumerAnnotation.retryBackoffMs(), kafkaConfig.defaultConsumerRetryBackoffMs()).filter(v -> v > 0).findFirst().orElse(0);
 
         final String groupId = VerySimpleEnvironmentResolver.resolveVariables(consumerAnnotation.groupId());
         final Class<?> recordKeyType = consumerAnnotation.keyType();
@@ -199,7 +203,7 @@ public class DelegationKafkaConsumer implements Runnable {
                                 logger.error("error dispatching received value to consumer", e);
                                 break;
                             } catch (SerializationException e) {
-                                logger.warn("failed to deserialize", e);
+                                logger.error("failed to deserialize message, giving up", e);
                                 break;
                             } catch (InvocationTargetException e) {
                                 //only log stack trace on last run
@@ -207,6 +211,7 @@ public class DelegationKafkaConsumer implements Runnable {
                                     logger.error(String.format("error dispatching received value to consumer, giving up after run %d/%d", retries + 1, numberOfRetries), e);
                                 } else {
                                     logger.warn(String.format("failed on run %d/%d, will retry: %s", retries + 1, numberOfRetries, e.toString()));
+                                    sleepRetryBackoffMs();
                                 }
                                 retries++;
                             }
@@ -227,6 +232,14 @@ public class DelegationKafkaConsumer implements Runnable {
         } finally {
             logger.info("Close the consumer.");
             consumer.close();
+        }
+    }
+
+    private void sleepRetryBackoffMs() {
+        try {
+            Thread.sleep(retryBackoffMs);
+        } catch (InterruptedException e) {
+            // continue; shutdown is triggered by WakeupException only
         }
     }
 
@@ -263,7 +276,7 @@ public class DelegationKafkaConsumer implements Runnable {
     /**
      * True when a consumer is running; otherwise false
      */
-    public boolean isRunning() {
+    private boolean isRunning() {
         return running.get();
     }
 
