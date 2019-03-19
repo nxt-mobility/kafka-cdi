@@ -16,15 +16,15 @@
 package org.aerogear.kafka.cdi.extension;
 
 import org.aerogear.kafka.ExtendedKafkaProducer;
+import org.aerogear.kafka.SimpleKafkaProducer;
 import org.aerogear.kafka.cdi.annotation.Consumer;
 import org.aerogear.kafka.cdi.annotation.KafkaConfig;
+import org.aerogear.kafka.cdi.annotation.KafkaStream;
+import org.aerogear.kafka.cdi.annotation.Producer;
 import org.aerogear.kafka.impl.DelegationKafkaConsumer;
 import org.aerogear.kafka.impl.DelegationStreamProcessor;
 import org.aerogear.kafka.impl.InjectedKafkaProducer;
 import org.aerogear.kafka.serialization.CafdiSerdes;
-import org.aerogear.kafka.SimpleKafkaProducer;
-import org.aerogear.kafka.cdi.annotation.KafkaStream;
-import org.aerogear.kafka.cdi.annotation.Producer;
 import org.apache.kafka.common.serialization.Serde;
 import org.apache.kafka.common.serialization.Serializer;
 import org.slf4j.Logger;
@@ -135,13 +135,6 @@ public class KafkaExtension<X> implements Extension {
 
             frameworkProcessor.init(bootstrapServers, annotatedStreamMethod, bm);
         });
-
-
-
-
-
-
-
     }
 
     public void beforeShutdown(@Observes final BeforeShutdown bs) {

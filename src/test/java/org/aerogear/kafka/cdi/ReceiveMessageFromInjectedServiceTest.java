@@ -23,7 +23,11 @@ import org.aerogear.kafka.cdi.beans.mock.MockProvider;
 import org.aerogear.kafka.cdi.proto.AddressBookProtos;
 import org.aerogear.kafka.cdi.tests.AbstractTestBase;
 import org.aerogear.kafka.cdi.tests.KafkaClusterTestBase;
-import org.apache.kafka.clients.consumer.*;
+import org.apache.kafka.clients.consumer.ConsumerConfig;
+import org.apache.kafka.clients.consumer.ConsumerRecord;
+import org.apache.kafka.clients.consumer.ConsumerRecords;
+import org.apache.kafka.clients.consumer.KafkaConsumer;
+import org.apache.kafka.clients.consumer.OffsetResetStrategy;
 import org.apache.kafka.common.header.Header;
 import org.apache.kafka.common.header.Headers;
 import org.apache.kafka.common.header.internals.RecordHeader;
@@ -48,6 +52,7 @@ import java.util.Properties;
 
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.junit.Assert.assertEquals;
 
 
 @RunWith(Arquillian.class)
@@ -117,11 +122,8 @@ public class ReceiveMessageFromInjectedServiceTest extends KafkaClusterTestBase 
         ArgumentCaptor<AddressBookProtos.Person> personCaptor = ArgumentCaptor.forClass(AddressBookProtos.Person.class);
         protoService.sendMessage();
         Thread.sleep(2000);
-        Mockito.verify(receiver, Mockito.times(1)).ack(Mockito.any(), personCaptor.capture(), Mockito.any());
+        Mockito.verify(receiver, Mockito.times(2)).ack(Mockito.any(), personCaptor.capture(), Mockito.any());
         assertEquals("Franz Kafka", personCaptor.getValue().getName());
-    }
-
-    private void assertEquals(String franz_kafka, String name) {
     }
 
     @Test

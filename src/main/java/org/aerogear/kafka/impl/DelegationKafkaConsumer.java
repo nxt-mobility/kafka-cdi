@@ -36,6 +36,7 @@ import javax.enterprise.inject.spi.Bean;
 import javax.enterprise.inject.spi.BeanManager;
 import javax.enterprise.inject.spi.CDI;
 import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.util.Arrays;
 import java.util.List;
@@ -47,10 +48,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
 import static org.apache.kafka.clients.CommonClientConfigs.BOOTSTRAP_SERVERS_CONFIG;
-import static org.apache.kafka.clients.consumer.ConsumerConfig.GROUP_ID_CONFIG;
-import static org.apache.kafka.clients.consumer.ConsumerConfig.AUTO_OFFSET_RESET_CONFIG;
-import static org.apache.kafka.clients.consumer.ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG;
-import static org.apache.kafka.clients.consumer.ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG;
+import static org.apache.kafka.clients.consumer.ConsumerConfig.*;
 
 public class DelegationKafkaConsumer implements Runnable {
 
@@ -70,6 +68,8 @@ public class DelegationKafkaConsumer implements Runnable {
 
     private int numberOfRetries;
     private Class<?>[] parameterTypes;
+    private Type[] genericParameterTypes;
+    private ConsumerMode mode;
 
     public DelegationKafkaConsumer() {
     }
@@ -89,21 +89,25 @@ public class DelegationKafkaConsumer implements Runnable {
         }
     }
 
-    private Class<?> consumerKeyType(final Class<?> defaultKeyType, final AnnotatedMethod annotatedMethod) {
-
-        if (annotatedMethod.getJavaMember().getParameterTypes().length >= 2) {
-            return annotatedMethod.getJavaMember().getParameterTypes()[0];
+    private Class<?> consumerKeyType(final Class<?> defaultKeyType) {
+        if (parameterTypes.length >= 2) {
+            return parameterTypes[0];
         } else {
+            if (parameterTypes.length == 1 && ConsumerRecords.class.isAssignableFrom(parameterTypes[0])) {
+                return (Class<?>) ((ParameterizedType) genericParameterTypes[0]).getActualTypeArguments()[0];
+            }
             return defaultKeyType;
         }
     }
 
-    private Class<?> consumerValueType(final AnnotatedMethod annotatedMethod) {
-
-        if (annotatedMethod.getJavaMember().getParameterTypes().length >= 2) {
-            return annotatedMethod.getJavaMember().getParameterTypes()[1];
+    private Class<?> consumerValueType() {
+        if (parameterTypes.length >= 2) {
+            return parameterTypes[1];
         } else {
-            return annotatedMethod.getJavaMember().getParameterTypes()[0];
+            if (parameterTypes.length == 1 && ConsumerRecords.class.isAssignableFrom(parameterTypes[0])) {
+                return (Class<?>) ((ParameterizedType) genericParameterTypes[0]).getActualTypeArguments()[1];
+            }
+            return parameterTypes[0];
         }
     }
 
@@ -126,9 +130,11 @@ public class DelegationKafkaConsumer implements Runnable {
 
         this.annotatedListenerMethod = annotatedMethod;
         parameterTypes = annotatedListenerMethod.getJavaMember().getParameterTypes();
+        genericParameterTypes = annotatedListenerMethod.getJavaMember().getGenericParameterTypes();
+        mode = getConsumerMode(parameterTypes);
 
-        final Class<?> keyTypeClass = consumerKeyType(recordKeyType, annotatedMethod);
-        final Class<?> valTypeClass = consumerValueType(annotatedMethod);
+        final Class<?> keyTypeClass = consumerKeyType(recordKeyType);
+        final Class<?> valTypeClass = consumerValueType();
 
         properties.put(BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
         properties.put(GROUP_ID_CONFIG, groupId);
@@ -152,7 +158,9 @@ public class DelegationKafkaConsumer implements Runnable {
         try {
             consumer.subscribe(topics, consumerRebalanceListener);
             logger.info("subscribed to {}", topics);
+            pollingLoop:
             while (isRunning()) {
+
                 final ConsumerRecords<?, ?> records = consumer.poll(100);
                 for (final ConsumerRecord<?, ?> record : records) {
 
@@ -172,8 +180,12 @@ public class DelegationKafkaConsumer implements Runnable {
                                 CdiRequestScopeUtils.start(boundRequestContext, requestDataStore);
 
                                 try {
-
-                                    dispatchPayload(record);
+                                    if (mode == ConsumerMode.SINGLE) {
+                                        dispatchSinglePayload(record);
+                                    } else {
+                                        dispatchCompletePayload(records);
+                                        continue pollingLoop;
+                                    }
                                     success = true;
                                 } finally {
                                     CdiRequestScopeUtils.end(boundRequestContext, requestDataStore);
@@ -214,7 +226,7 @@ public class DelegationKafkaConsumer implements Runnable {
         }
     }
 
-    private void dispatchPayload(ConsumerRecord<?, ?> record) throws IllegalAccessException, InvocationTargetException {
+    private void dispatchSinglePayload(ConsumerRecord<?, ?> record) throws IllegalAccessException, InvocationTargetException {
         logger.trace("dispatching payload {} to consumer", record.value());
 
         if (parameterTypes.length == 3) {
@@ -223,6 +235,24 @@ public class DelegationKafkaConsumer implements Runnable {
             annotatedListenerMethod.getJavaMember().invoke(consumerInstance, record.key(), record.value());
         } else {
             annotatedListenerMethod.getJavaMember().invoke(consumerInstance, record.value());
+        }
+    }
+
+    private void dispatchCompletePayload(ConsumerRecords<?, ?> records) throws IllegalAccessException, InvocationTargetException {
+        logger.trace("dispatching payload {} consumer records to consumer", records.count());
+        annotatedListenerMethod.getJavaMember().invoke(consumerInstance, records);
+    }
+
+    private ConsumerMode getConsumerMode(Class<?>[] parameterTypes) {
+        if (parameterTypes.length > 1) {
+            return ConsumerMode.SINGLE;
+        } else if (parameterTypes.length == 1) {
+            if (parameterTypes[0].isAssignableFrom(ConsumerRecords.class)) {
+                return ConsumerMode.ALL;
+            }
+            return ConsumerMode.SINGLE;
+        } else {
+            throw new IllegalArgumentException("Consumer methods must have at least one parameter.");
         }
     }
 
@@ -240,6 +270,10 @@ public class DelegationKafkaConsumer implements Runnable {
         logger.info("Shutting down the consumer.");
         running.set(Boolean.FALSE);
         consumer.wakeup();
+    }
+
+    private enum ConsumerMode {
+        SINGLE, ALL;
     }
 
 }
