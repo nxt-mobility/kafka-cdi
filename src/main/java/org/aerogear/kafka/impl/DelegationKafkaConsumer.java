@@ -43,7 +43,6 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
@@ -70,6 +69,7 @@ public class DelegationKafkaConsumer implements Runnable {
     private ConsumerRebalanceListener consumerRebalanceListener;
 
     private int numberOfRetries;
+    private Class<?>[] parameterTypes;
 
     public DelegationKafkaConsumer() {
     }
@@ -125,6 +125,7 @@ public class DelegationKafkaConsumer implements Runnable {
         final Class<?> recordKeyType = consumerAnnotation.keyType();
 
         this.annotatedListenerMethod = annotatedMethod;
+        parameterTypes = annotatedListenerMethod.getJavaMember().getParameterTypes();
 
         final Class<?> keyTypeClass = consumerKeyType(recordKeyType, annotatedMethod);
         final Class<?> valTypeClass = consumerValueType(annotatedMethod);
@@ -171,6 +172,7 @@ public class DelegationKafkaConsumer implements Runnable {
                                 CdiRequestScopeUtils.start(boundRequestContext, requestDataStore);
 
                                 try {
+
                                     dispatchPayload(record);
                                     success = true;
                                 } finally {
@@ -215,13 +217,10 @@ public class DelegationKafkaConsumer implements Runnable {
     private void dispatchPayload(ConsumerRecord<?, ?> record) throws IllegalAccessException, InvocationTargetException {
         logger.trace("dispatching payload {} to consumer", record.value());
 
-        final Class<?>[] parameterTypes = annotatedListenerMethod.getJavaMember().getParameterTypes();
-
         if (parameterTypes.length == 3) {
             annotatedListenerMethod.getJavaMember().invoke(consumerInstance, record.key(), record.value(), record.headers());
         } else if (parameterTypes.length == 2) {
             annotatedListenerMethod.getJavaMember().invoke(consumerInstance, record.key(), record.value());
-
         } else {
             annotatedListenerMethod.getJavaMember().invoke(consumerInstance, record.value());
         }
