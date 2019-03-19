@@ -46,6 +46,7 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 import static org.apache.kafka.clients.CommonClientConfigs.BOOTSTRAP_SERVERS_CONFIG;
 import static org.apache.kafka.clients.consumer.ConsumerConfig.*;
@@ -138,7 +139,9 @@ public class DelegationKafkaConsumer implements Runnable {
 
         properties.put(BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
         properties.put(GROUP_ID_CONFIG, groupId);
-        properties.put(FETCH_MAX_WAIT_MS_CONFIG, consumerAnnotation.fetchMaxWaitMs());
+
+        IntStream.of(consumerAnnotation.fetchMaxWaitMs(), kafkaConfig.defaultFetchMaxWaitMs()).filter(value -> value > 0).findFirst().ifPresent(value -> properties.put(FETCH_MAX_WAIT_MS_CONFIG, value));
+
         properties.put(AUTO_OFFSET_RESET_CONFIG, consumerAnnotation.offset());
         properties.put(KEY_DESERIALIZER_CLASS_CONFIG, CafdiSerdes.serdeFrom(keyTypeClass).deserializer().getClass());
         properties.put(VALUE_DESERIALIZER_CLASS_CONFIG, CafdiSerdes.serdeFrom(valTypeClass).deserializer().getClass());

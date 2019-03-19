@@ -33,4 +33,10 @@ public @interface KafkaConfig {
     String bootstrapServers();
 
     int consumerRetries() default 0;
+
+    int defaultLingerMs() default -1;
+
+    int defaultFetchMaxWaitMs() default -1;
+
+    int defaultProducerRetries() default 0;
 }

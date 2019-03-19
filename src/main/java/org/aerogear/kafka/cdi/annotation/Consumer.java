@@ -42,5 +42,5 @@ public @interface Consumer {
     /**
      * Represents the kafka config property <code>fetch.max.wait.ms</code>
      */
-    int fetchMaxWaitMs() default 500;
+    int fetchMaxWaitMs() default -1;
 }

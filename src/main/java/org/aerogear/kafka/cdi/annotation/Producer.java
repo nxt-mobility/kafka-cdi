@@ -34,5 +34,11 @@ public @interface Producer {
     /**
      * represents the kafka configuration property <code>linger.ms</code>
      */
-    int lingerMs() default 0;
+    int lingerMs() default -1;
+
+    /**
+     * represents the kafka configuration property <code>retries</code>
+     */
+    int retries() default -1;
+
 }

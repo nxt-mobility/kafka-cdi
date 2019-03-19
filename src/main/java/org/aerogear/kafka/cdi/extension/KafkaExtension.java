@@ -55,6 +55,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.IntStream;
 
 import static java.util.Collections.newSetFromMap;
 import static org.apache.kafka.clients.CommonClientConfigs.BOOTSTRAP_SERVERS_CONFIG;
@@ -236,7 +237,10 @@ public class KafkaExtension<X> implements Extension {
         properties.put(BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
         properties.put(KEY_SERIALIZER_CLASS_CONFIG, keySerializerClass);
         properties.put(VALUE_SERIALIZER_CLASS_CONFIG, valSerializerClass);
-        properties.put(LINGER_MS_CONFIG, annotation.lingerMs());
+
+        IntStream.of(annotation.lingerMs(), kafkaConfig.defaultLingerMs()).filter(value -> value >= 0).findFirst().ifPresent(value -> properties.put(LINGER_MS_CONFIG, value));
+        IntStream.of(annotation.retries(), kafkaConfig.defaultProducerRetries()).filter(value -> value >= 0).findFirst().ifPresent(value -> properties.put(RETRIES_CONFIG, value));
+
 
         return new InjectedKafkaProducer(properties, keySerializer, valSerializer);
     }
