@@ -194,6 +194,9 @@ public class DelegationKafkaConsumer implements Runnable {
                             } catch (IllegalAccessException e) {
                                 logger.error("error dispatching received value to consumer", e);
                                 break;
+                            } catch (SerializationException e) {
+                                logger.warn("failed to deserialize", e);
+                                break;
                             } catch (InvocationTargetException e) {
                                 //only log stack trace on last run
                                 if (retries == numberOfRetries) {
@@ -209,17 +212,14 @@ public class DelegationKafkaConsumer implements Runnable {
                     }
                 }
             }
-        } catch (SerializationException e) {
-            logger.warn("Consumer exception", e);
-            throw e;
         } catch (WakeupException e) {
             // Ignore exception if closing
             if (isRunning()) {
-                logger.trace("Exception", e);
+                logger.trace("Unexpected WakeupException", e);
                 throw e;
             }
-        } catch (Exception e) {
-            logger.error("Exception", e);
+        } catch (Throwable t) {
+            logger.error("Unexpected fatal error", t);
         } finally {
             logger.info("Close the consumer.");
             consumer.close();
