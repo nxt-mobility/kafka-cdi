@@ -30,4 +30,9 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 @Documented
 public @interface Producer {
+
+    /**
+     * represents the kafka configuration property <code>linger.ms</code>
+     */
+    long lingerMs() default 0;
 }

@@ -58,8 +58,7 @@ import java.util.concurrent.TimeUnit;
 
 import static java.util.Collections.newSetFromMap;
 import static org.apache.kafka.clients.CommonClientConfigs.BOOTSTRAP_SERVERS_CONFIG;
-import static org.apache.kafka.clients.producer.ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG;
-import static org.apache.kafka.clients.producer.ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG;
+import static org.apache.kafka.clients.producer.ProducerConfig.*;
 
 public class KafkaExtension<X> implements Extension {
 
@@ -114,7 +113,7 @@ public class KafkaExtension<X> implements Extension {
 
         logger.debug("wiring annotated methods to internal Kafka Util clazzes");
 
-        listenerMethods.forEach( consumerMethod -> {
+        listenerMethods.forEach(consumerMethod -> {
 
             final Bean<DelegationKafkaConsumer> bean = (Bean<DelegationKafkaConsumer>) bm.getBeans(DelegationKafkaConsumer.class).iterator().next();
             final CreationalContext<DelegationKafkaConsumer> ctx = bm.createCreationalContext(bean);
@@ -161,15 +160,16 @@ public class KafkaExtension<X> implements Extension {
                         if (field.getType().isAssignableFrom(SimpleKafkaProducer.class) || field.getType().isAssignableFrom(ExtendedKafkaProducer.class)) {
                             field.setAccessible(Boolean.TRUE);
 
-                            final Serde<?> keySerde = CafdiSerdes.serdeFrom((Class<?>)  ((ParameterizedType)field.getGenericType()).getActualTypeArguments()[0]);
-                            final Serde<?> valSerde = CafdiSerdes.serdeFrom((Class<?>)  ((ParameterizedType)field.getGenericType()).getActualTypeArguments()[1]);
+                            final Serde<?> keySerde = CafdiSerdes.serdeFrom((Class<?>) ((ParameterizedType) field.getGenericType()).getActualTypeArguments()[0]);
+                            final Serde<?> valSerde = CafdiSerdes.serdeFrom((Class<?>) ((ParameterizedType) field.getGenericType()).getActualTypeArguments()[1]);
 
                             final org.apache.kafka.clients.producer.Producer p = createInjectionProducer(
                                     bootstrapServers,
                                     keySerde.serializer().getClass(),
                                     valSerde.serializer().getClass(),
                                     keySerde.serializer(),
-                                    valSerde.serializer()
+                                    valSerde.serializer(),
+                                    annotation
                             );
 
                             managedProducers.add(p);
@@ -230,12 +230,13 @@ public class KafkaExtension<X> implements Extension {
         executorService.execute(delegationKafkaConsumer);
     }
 
-    private org.apache.kafka.clients.producer.Producer createInjectionProducer(final String bootstrapServers, final Class<?> keySerializerClass, final Class<?> valSerializerClass, final Serializer<?> keySerializer, final Serializer<?> valSerializer ) {
+    private org.apache.kafka.clients.producer.Producer createInjectionProducer(final String bootstrapServers, final Class<?> keySerializerClass, final Class<?> valSerializerClass, final Serializer<?> keySerializer, final Serializer<?> valSerializer, final Producer annotation) {
 
         final Properties properties = new Properties();
         properties.put(BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
         properties.put(KEY_SERIALIZER_CLASS_CONFIG, keySerializerClass);
         properties.put(VALUE_SERIALIZER_CLASS_CONFIG, valSerializerClass);
+        properties.put(LINGER_MS_CONFIG, annotation.lingerMs());
 
         return new InjectedKafkaProducer(properties, keySerializer, valSerializer);
     }

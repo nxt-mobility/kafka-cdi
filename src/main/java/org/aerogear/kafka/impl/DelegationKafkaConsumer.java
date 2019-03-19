@@ -138,6 +138,7 @@ public class DelegationKafkaConsumer implements Runnable {
 
         properties.put(BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
         properties.put(GROUP_ID_CONFIG, groupId);
+        properties.put(FETCH_MAX_WAIT_MS_CONFIG, consumerAnnotation.fetchMaxWaitMs());
         properties.put(AUTO_OFFSET_RESET_CONFIG, consumerAnnotation.offset());
         properties.put(KEY_DESERIALIZER_CLASS_CONFIG, CafdiSerdes.serdeFrom(keyTypeClass).deserializer().getClass());
         properties.put(VALUE_DESERIALIZER_CLASS_CONFIG, CafdiSerdes.serdeFrom(valTypeClass).deserializer().getClass());

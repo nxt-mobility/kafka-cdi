@@ -38,4 +38,9 @@ public @interface Consumer {
     String offset() default "latest";
     Class<?> keyType() default String.class;
     Class<? extends ConsumerRebalanceListener> consumerRebalanceListener() default DefaultConsumerRebalanceListener.class;
+
+    /**
+     * Represents the kafka config property <code>fetch.max.wait.ms</code>
+     */
+    long fetchMaxWaitMs() default 500;
 }
