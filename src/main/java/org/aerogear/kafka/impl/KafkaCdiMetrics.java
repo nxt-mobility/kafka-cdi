@@ -1,14 +1,28 @@
 package org.aerogear.kafka.impl;
 
+import org.eclipse.microprofile.health.Health;
+import org.eclipse.microprofile.health.HealthCheck;
+import org.eclipse.microprofile.health.HealthCheckResponse;
+
 import javax.enterprise.context.ApplicationScoped;
 import java.util.concurrent.atomic.AtomicLong;
 
+@Health
 @ApplicationScoped
-public class KafkaCdiMetrics {
+public class KafkaCdiMetrics implements HealthCheck {
 
     private final AtomicLong createdConsumers = new AtomicLong();
     private final AtomicLong startedConsumers = new AtomicLong();
     private final AtomicLong closedConsumers = new AtomicLong();
+
+    @Override
+    public HealthCheckResponse call() {
+        return HealthCheckResponse.named("kafka-cdi").state(healthy())
+                .withData("created-consumers", getCreatedConsumers())
+                .withData("started-consumers", getStartedConsumers())
+                .withData("closed-consumers", getClosedConsumers())
+                .build();
+    }
 
     public long getCreatedConsumers() {
         return createdConsumers.get();
