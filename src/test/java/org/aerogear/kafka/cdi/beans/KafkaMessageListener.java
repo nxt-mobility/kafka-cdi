@@ -74,13 +74,18 @@ public class KafkaMessageListener {
     }
 
 
-    @Consumer(topics = {ReceiveMessageFromInjectedServiceTest.PROTO_PRODUCER_TOPIC_NAME}, groupId = "FRANZ_KAFKA_FANGROUP")
+    @Consumer(topics = {ReceiveMessageFromInjectedServiceTest.PROTO_PRODUCER_TOPIC_NAME},
+            groupId = "FRANZ_KAFKA_FANGROUP",
+            consumerRebalanceListener = MyConsumerRebalanceListener.class
+    )
     public void onMessage(AddressBookProtos.Person person) {
         logger.info("Got message: {} ", person.getName());
         protoTopicReceiver.ack(null, person, null);
     }
 
-    @Consumer(topics = {ReceiveMessageFromInjectedServiceTest.PROTO_PRODUCER_TOPIC_NAME}, groupId = "MULTIPLE_CONSUMER_RECODRDS")
+    @Consumer(topics = {ReceiveMessageFromInjectedServiceTest.PROTO_PRODUCER_TOPIC_NAME},
+            groupId = "MULTIPLE_CONSUMER_RECODRDS",
+            consumerRebalanceListener = MyConsumerRebalanceListener.class)
     public void onMessage(ConsumerRecords<String, AddressBookProtos.Person> records) {
         Assert.assertEquals(1, records.count());
         protoTopicReceiver.ack(null, records.iterator().next().value(), null);

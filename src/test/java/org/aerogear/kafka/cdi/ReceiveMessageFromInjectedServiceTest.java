@@ -1,12 +1,12 @@
 /**
  * Copyright 2017 Red Hat, Inc, and individual contributors.
- *
+ * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
+ * <p>
  * http://www.apache.org/licenses/LICENSE-2.0
- *
+ * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -62,10 +62,12 @@ public class ReceiveMessageFromInjectedServiceTest extends KafkaClusterTestBase 
     public static final String PROTO_PRODUCER_TOPIC_NAME = "ServiceInjectionTest.ProtoProducer";
     public static final String EXTENDED_PRODUCER_TOPIC_NAME = "ServiceInjectionTest.ExtendedProducer";
 
-    private final Logger logger = LoggerFactory.getLogger(ReceiveMessageFromInjectedServiceTest.class);
+    private static final Logger logger = LoggerFactory.getLogger(ReceiveMessageFromInjectedServiceTest.class);
 
     @Deployment
     public static JavaArchive createDeployment() {
+        logger.info("creating deployment");
+        createTopics();
 
         return AbstractTestBase.createFrameworkDeployment()
                 .addPackage(KafkaService.class.getPackage())
@@ -78,11 +80,8 @@ public class ReceiveMessageFromInjectedServiceTest extends KafkaClusterTestBase 
     @Inject
     private ProtoUsingKafkaService protoService;
 
-    @BeforeClass
-    public static void createTopic() {
-        kafkaCluster.createTopics(SIMPLE_PRODUCER_TOPIC_NAME);
-        kafkaCluster.createTopics(EXTENDED_PRODUCER_TOPIC_NAME);
-        kafkaCluster.createTopics(PROTO_PRODUCER_TOPIC_NAME);
+    private static void createTopics() {
+        kafkaCluster().createTopics(SIMPLE_PRODUCER_TOPIC_NAME, EXTENDED_PRODUCER_TOPIC_NAME, PROTO_PRODUCER_TOPIC_NAME);
     }
 
     @Test
@@ -93,7 +92,7 @@ public class ReceiveMessageFromInjectedServiceTest extends KafkaClusterTestBase 
         Thread.sleep(1000);
         service.sendMessage();
 
-        Properties cconfig = kafkaCluster.useTo().getConsumerProperties(consumerId, consumerId, OffsetResetStrategy.EARLIEST);
+        Properties cconfig = kafkaCluster().useTo().getConsumerProperties(consumerId, consumerId, OffsetResetStrategy.EARLIEST);
         cconfig.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
         cconfig.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
         consumer = new KafkaConsumer(cconfig);
@@ -102,7 +101,7 @@ public class ReceiveMessageFromInjectedServiceTest extends KafkaClusterTestBase 
 
         boolean loop = true;
 
-        while(loop) {
+        while (loop) {
 
             final ConsumerRecords<String, String> records = consumer.poll(Long.MAX_VALUE);
             for (final ConsumerRecord<String, String> record : records) {
@@ -135,7 +134,7 @@ public class ReceiveMessageFromInjectedServiceTest extends KafkaClusterTestBase 
         Thread.sleep(1000);
         service.sendMessageWithHeader();
 
-        Properties cconfig = kafkaCluster.useTo().getConsumerProperties(consumerId, consumerId, OffsetResetStrategy.EARLIEST);
+        Properties cconfig = kafkaCluster().useTo().getConsumerProperties(consumerId, consumerId, OffsetResetStrategy.EARLIEST);
         cconfig.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
         cconfig.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
         consumer = new KafkaConsumer(cconfig);
@@ -144,7 +143,7 @@ public class ReceiveMessageFromInjectedServiceTest extends KafkaClusterTestBase 
 
         boolean loop = true;
 
-        while(loop) {
+        while (loop) {
 
             final ConsumerRecords<String, String> records = consumer.poll(Long.MAX_VALUE);
             for (final ConsumerRecord<String, String> record : records) {

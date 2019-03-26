@@ -34,11 +34,11 @@ public class MyConsumerRebalanceListener implements ConsumerRebalanceListener {
 
     @Override
     public void onPartitionsRevoked(Collection<TopicPartition> partitions) {
-        logger.trace("Partitions that got revoked: {}", partitions);
+        logger.info("Partitions that got revoked: {}", partitions);
     }
 
     @Override
     public void onPartitionsAssigned(Collection<TopicPartition> partitions) {
-        logger.trace("Partitions that got assigned: {}", partitions);
+        logger.info("Partitions that got assigned: {}", partitions);
     }
 }

@@ -61,15 +61,15 @@ public class VanillaKafkaTest extends KafkaClusterTestBase {
         final String topicName = "vanillaKafka";
         final String producerId = topicName;
         final String consumerId = topicName;
-        kafkaCluster.createTopic(topicName, 1, 1);
+        kafkaCluster().createTopic(topicName, 1, 1);
 
-        final Properties consumerProperties = kafkaCluster.useTo().getConsumerProperties(consumerId, consumerId, OffsetResetStrategy.EARLIEST);
+        final Properties consumerProperties = kafkaCluster().useTo().getConsumerProperties(consumerId, consumerId, OffsetResetStrategy.EARLIEST);
         consumerProperties.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
         consumerProperties.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
         consumer = new KafkaConsumer(consumerProperties);
         consumer.subscribe(Arrays.asList(topicName));
 
-        final Properties producerProperties = kafkaCluster.useTo().getProducerProperties(producerId);
+        final Properties producerProperties = kafkaCluster().useTo().getProducerProperties(producerId);
         producerProperties.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
         producerProperties.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
         producer = new KafkaProducer<>(producerProperties);

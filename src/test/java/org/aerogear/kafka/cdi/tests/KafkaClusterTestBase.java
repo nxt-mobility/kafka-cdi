@@ -32,23 +32,25 @@ public abstract class KafkaClusterTestBase extends AbstractTestBase {
     protected KafkaProducer producer;
 
     private static File dataDir;
-    protected static KafkaCluster kafkaCluster;
+    private static KafkaCluster kafkaCluster;
 
     protected static KafkaCluster kafkaCluster() {
         if (kafkaCluster != null) {
-            throw new IllegalStateException();
+            return kafkaCluster;
         }
+
         dataDir = Testing.Files.createTestingDirectory("cluster");
         kafkaCluster = new KafkaCluster().usingDirectory(dataDir)
                 .deleteDataPriorToStartup(true)
                 .deleteDataUponShutdown(true)
                 .withPorts(2282, 9098);
-        return kafkaCluster;
-    }
+        try {
+            kafkaCluster = kafkaCluster().addBrokers(1).startup();
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to startup broker", e);
+        }
 
-    @BeforeClass
-    public static void setUp() throws IOException {
-        kafkaCluster = kafkaCluster().addBrokers(1).startup();
+        return kafkaCluster;
     }
 
     @AfterClass
