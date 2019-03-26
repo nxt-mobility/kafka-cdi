@@ -81,8 +81,8 @@ public class ReceiveMessageFromInjectedServiceTest extends KafkaClusterTestBase 
     @BeforeClass
     public static void createTopic() {
         kafkaCluster.createTopics(SIMPLE_PRODUCER_TOPIC_NAME);
-        kafkaCluster.createTopics(PROTO_PRODUCER_TOPIC_NAME);
         kafkaCluster.createTopics(EXTENDED_PRODUCER_TOPIC_NAME);
+        kafkaCluster.createTopics(PROTO_PRODUCER_TOPIC_NAME);
     }
 
     @Test
@@ -119,6 +119,8 @@ public class ReceiveMessageFromInjectedServiceTest extends KafkaClusterTestBase 
 
     @Test
     public void testSendAndReceiveProto(@ForTopic(PROTO_PRODUCER_TOPIC_NAME) MessageReceiver receiver) throws Exception {
+        Thread.sleep(1000);
+
         ArgumentCaptor<AddressBookProtos.Person> personCaptor = ArgumentCaptor.forClass(AddressBookProtos.Person.class);
         protoService.sendMessage();
         Thread.sleep(2000);

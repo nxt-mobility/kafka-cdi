@@ -75,6 +75,9 @@ public class DelegationKafkaConsumer implements Runnable {
     private Type[] genericParameterTypes;
     private ConsumerMode mode;
 
+    private KafkaCdiMetrics metrics;
+    private final AtomicBoolean started = new AtomicBoolean(false);
+
     public DelegationKafkaConsumer() {
     }
 
@@ -159,6 +162,10 @@ public class DelegationKafkaConsumer implements Runnable {
         final Type consumerTpye = annotatedListenerMethod.getJavaMember().getDeclaringClass();
 
         consumerInstance = beanManager.getReference(propertyResolverBean, consumerTpye, creationalContext);
+
+        Bean<?> metricsBean = beanManager.resolve(beanManager.getBeans(KafkaCdiMetrics.class));
+        metrics = (KafkaCdiMetrics)beanManager.getReference(metricsBean, KafkaCdiMetrics.class, beanManager.createCreationalContext(metricsBean));
+        metrics.consumerCreated();
     }
 
     @Override
@@ -170,6 +177,11 @@ public class DelegationKafkaConsumer implements Runnable {
             while (isRunning()) {
 
                 final ConsumerRecords<?, ?> records = consumer.poll(100);
+
+                if (!started.getAndSet(true)) {
+                    metrics.consumerStarted(); // count consumer as started after first successful poll
+                }
+
                 for (final ConsumerRecord<?, ?> record : records) {
 
 
@@ -231,6 +243,7 @@ public class DelegationKafkaConsumer implements Runnable {
             logger.error("Unexpected fatal error", t);
         } finally {
             logger.info("Close the consumer.");
+            metrics.consumerClosed();
             consumer.close();
         }
     }
