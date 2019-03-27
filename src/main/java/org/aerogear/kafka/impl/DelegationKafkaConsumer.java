@@ -31,10 +31,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.enterprise.context.spi.CreationalContext;
+import javax.enterprise.inject.Any;
 import javax.enterprise.inject.spi.AnnotatedMethod;
 import javax.enterprise.inject.spi.Bean;
 import javax.enterprise.inject.spi.BeanManager;
 import javax.enterprise.inject.spi.CDI;
+import javax.enterprise.util.AnnotationLiteral;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
@@ -45,7 +47,6 @@ import java.util.Properties;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.function.IntPredicate;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -163,8 +164,8 @@ public class DelegationKafkaConsumer implements Runnable {
 
         consumerInstance = beanManager.getReference(propertyResolverBean, consumerTpye, creationalContext);
 
-        Bean<?> metricsBean = beanManager.resolve(beanManager.getBeans(KafkaCdiMetrics.class));
-        metrics = (KafkaCdiMetrics)beanManager.getReference(metricsBean, KafkaCdiMetrics.class, beanManager.createCreationalContext(metricsBean));
+        Bean<?> metricsBean = beanManager.resolve(beanManager.getBeans(KafkaCdiMetrics.class, new AnnotationLiteral<Any>() {}));
+        metrics = (KafkaCdiMetrics) beanManager.getReference(metricsBean, KafkaCdiMetrics.class, beanManager.createCreationalContext(metricsBean));
         metrics.consumerCreated();
     }
 
