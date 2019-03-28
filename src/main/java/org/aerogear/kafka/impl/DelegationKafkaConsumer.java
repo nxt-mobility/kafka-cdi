@@ -258,7 +258,7 @@ public class DelegationKafkaConsumer implements Runnable {
 
         final long diffMs = pollEnd - pollStart;
         if (diffMs > slowThreshold) {
-            logger.warn("slow kafka poll() took %s ms - longer than warning threshold of %s ms", diffMs, slowThreshold);
+            logger.warn("slow kafka poll() took {} ms - longer than warning threshold of {} ms", diffMs, slowThreshold);
         }
     }
 
