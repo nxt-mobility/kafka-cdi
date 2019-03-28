@@ -177,8 +177,11 @@ public class DelegationKafkaConsumer implements Runnable {
             logger.info("subscribed to {}", topics);
             pollingLoop:
             while (isRunning()) {
+                long pollStart = System.currentTimeMillis();
 
                 final ConsumerRecords<?, ?> records = consumer.poll(100);
+
+                logSlowPoll(pollStart, System.currentTimeMillis());
 
                 if (!started.getAndSet(true)) {
                     metrics.consumerStarted(); // count consumer as started after first successful poll
@@ -247,6 +250,15 @@ public class DelegationKafkaConsumer implements Runnable {
             logger.info("Close the consumer.");
             metrics.consumerClosed();
             consumer.close();
+        }
+    }
+
+    private void logSlowPoll(long pollStart, long pollEnd) {
+        final long slowThreshold = 2000L;
+
+        final long diffMs = pollEnd - pollStart;
+        if (diffMs > slowThreshold) {
+            logger.warn("slow kafka poll() took %s ms - longer than warning threshold of %s ms", diffMs, slowThreshold);
         }
     }
 
