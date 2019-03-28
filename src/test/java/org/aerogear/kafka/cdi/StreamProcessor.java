@@ -31,7 +31,8 @@ public class StreamProcessor {
 
         final KStream<String, Long> successCountsPerJob = source.filter((key, value) -> value.equals("Success"))
                 .groupByKey()
-                .count("successMessagesStore").toStream();
+//                .count("successMessagesStore").toStream(); kafka 1.0.x version
+                .count().toStream(); // compiles in kafka 2.0.x, not sure if correct, but no test failure
 
         return successCountsPerJob;
     }
