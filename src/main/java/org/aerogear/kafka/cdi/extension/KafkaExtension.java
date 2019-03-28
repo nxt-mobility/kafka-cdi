@@ -240,6 +240,7 @@ public class KafkaExtension<X> implements Extension {
 
         IntStream.of(annotation.lingerMs(), kafkaConfig.defaultLingerMs()).filter(value -> value >= 0).findFirst().ifPresent(value -> properties.put(LINGER_MS_CONFIG, value));
         IntStream.of(annotation.retries(), kafkaConfig.defaultProducerRetries()).filter(value -> value >= 0).findFirst().ifPresent(value -> properties.put(RETRIES_CONFIG, value));
+        IntStream.of(annotation.requestTimeoutMs(), kafkaConfig.defaultRequestTimeoutMs()).filter(value -> value >= 0).findFirst().ifPresent(value -> properties.put(REQUEST_TIMEOUT_MS_CONFIG, value));
 
 
         return new InjectedKafkaProducer(properties, keySerializer, valSerializer);

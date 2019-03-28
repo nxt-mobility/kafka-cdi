@@ -149,6 +149,7 @@ public class DelegationKafkaConsumer implements Runnable {
         properties.put(GROUP_ID_CONFIG, groupId);
 
         IntStream.of(consumerAnnotation.fetchMaxWaitMs(), kafkaConfig.defaultFetchMaxWaitMs()).filter(value -> value > 0).findFirst().ifPresent(value -> properties.put(FETCH_MAX_WAIT_MS_CONFIG, value));
+        IntStream.of(consumerAnnotation.requestTimeoutMs(), kafkaConfig.defaultRequestTimeoutMs()).filter(value -> value > 0).findFirst().ifPresent(value -> properties.put(REQUEST_TIMEOUT_MS_CONFIG, value));
 
         properties.put(AUTO_OFFSET_RESET_CONFIG, consumerAnnotation.offset());
         properties.put(KEY_DESERIALIZER_CLASS_CONFIG, CafdiSerdes.serdeFrom(keyTypeClass).deserializer().getClass());

@@ -32,13 +32,18 @@ import java.lang.annotation.Target;
 public @interface Producer {
 
     /**
-     * Represents the kafka configuration property <code>linger.ms</code>.
+     * Represents the kafka configuration property <code>linger.ms</code>. The default value for all producers can be configured with {@link KafkaConfig#defaultLingerMs()}.
      */
     int lingerMs() default -1;
 
     /**
-     * Represents the kafka configuration property <code>retries</code>.
+     * Represents the kafka configuration property <code>retries</code>. The default value for all producers can be configured with {@link KafkaConfig#defaultProducerRetries()}.
      */
     int retries() default -1;
+
+    /**
+     * Represents the kafka configuration property <code>request.timeout.ms</code>. The default value for all producers can be configured with {@link KafkaConfig#defaultRequestTimeoutMs()}.
+     */
+    int requestTimeoutMs() default -1;
 
 }

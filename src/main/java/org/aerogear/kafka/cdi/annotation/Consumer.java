@@ -53,4 +53,9 @@ public @interface Consumer {
      * Time in milli seconds to backoff between delivery retries. The default value for all consumers can be configured with {@link KafkaConfig#defaultConsumerRetryBackoffMs()}}.
      */
     int retryBackoffMs() default -1;
+
+    /**
+     * Represents the kafka configuration property <code>request.timeout.ms</code>. The default value for all consumers can be configured with {@link KafkaConfig#defaultRequestTimeoutMs()}.
+     */
+    int requestTimeoutMs() default -1;
 }
