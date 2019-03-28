@@ -305,9 +305,9 @@
   </distributionManagement>
 
   <properties>
-    <version.kafka.clients>1.0.2</version.kafka.clients>
+    <version.kafka.clients>2.0.1</version.kafka.clients>
     <version.kafka.scala>2.11</version.kafka.scala>
-    <version.debezium>0.7.5</version.debezium>
+    <version.debezium>0.9.3.Final</version.debezium>
     <maven.compiler.source>1.8</maven.compiler.source>
     <maven.compiler.target>1.8</maven.compiler.target>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
