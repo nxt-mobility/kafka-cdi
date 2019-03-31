@@ -162,9 +162,9 @@ public class DelegationKafkaConsumer implements Runnable {
         final Set<Bean<?>> beans = beanManager.getBeans(annotatedListenerMethod.getJavaMember().getDeclaringClass());
         final Bean<?> propertyResolverBean = beanManager.resolve(beans);
         final CreationalContext<?> creationalContext = beanManager.createCreationalContext(propertyResolverBean);
-        final Type consumerTpye = annotatedListenerMethod.getJavaMember().getDeclaringClass();
+        final Type consumerType = annotatedListenerMethod.getJavaMember().getDeclaringClass();
 
-        consumerInstance = beanManager.getReference(propertyResolverBean, consumerTpye, creationalContext);
+        consumerInstance = beanManager.getReference(propertyResolverBean, consumerType, creationalContext);
 
         Bean<?> metricsBean = beanManager.resolve(beanManager.getBeans(KafkaCdiMetrics.class, new AnnotationLiteral<Any>() {}));
         metrics = (KafkaCdiMetrics) beanManager.getReference(metricsBean, KafkaCdiMetrics.class, beanManager.createCreationalContext(metricsBean));
