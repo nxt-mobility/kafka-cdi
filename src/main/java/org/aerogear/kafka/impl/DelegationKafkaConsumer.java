@@ -40,6 +40,7 @@ import javax.enterprise.util.AnnotationLiteral;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
+import java.time.Duration;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -179,7 +180,7 @@ public class DelegationKafkaConsumer implements Runnable {
             while (isRunning()) {
                 long pollStart = System.currentTimeMillis();
 
-                final ConsumerRecords<?, ?> records = consumer.poll(100);
+                final ConsumerRecords<?, ?> records = consumer.poll(Duration.ofMillis(100));
 
                 logSlowPoll(pollStart, System.currentTimeMillis());
 
