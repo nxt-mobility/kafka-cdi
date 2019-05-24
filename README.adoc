@@ -9,7 +9,7 @@ Making it easy to use Apache Kafka's Java client API in a CDI managed environmen
 This is a modified fork of link:https://github.com/aerogear/kafka-cdi[Aerogear's Kafka-CDI]. This project is not
 affiliated with Aerogear. Feel free to use the original version.
 
-Note that this extension is still in an proof of concept state and *not* production ready.
+Note that this extension is still in a proof of concept state and *not* production ready.
 Use without warranty of fitness for any purpose (see license).
 
 === Motivation
