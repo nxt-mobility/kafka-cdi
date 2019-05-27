@@ -25,7 +25,7 @@
     <version>25</version>
   </parent>
 
-    <groupId>cloud.nxtmobility</groupId>
+    <groupId>cloud.nxt-mobility</groupId>
   <artifactId>kafka-cdi-extension</artifactId>
   <version>0.1.8-SNAPSHOT</version>
   <packaging>jar</packaging>
@@ -33,9 +33,9 @@
   <description>Simple CDI extension for Apache Kafka</description>
 
   <scm>
-    <connection>scm:git:https://github.com/Altemista/kafka-cdi.git</connection>
-    <developerConnection>scm:git:git@gitlab.imobility.azure.altemista.cloud:nxt-infrastructure/kafka-cdi.git</developerConnection>
-    <url>https://github.com/Altemista/kafka-cdi</url>
+      <connection>scm:git:https://github.com/nxt-mobility/kafka-cdi.git</connection>
+      <developerConnection>scm:git:git@gitlab.com:nxt-mobility/nxt-infrastructure/kafka-cdi.git</developerConnection>
+      <url>https://github.com/nxt-mobility/kafka-cdi</url>
     <tag>HEAD</tag>
   </scm>
 
@@ -281,9 +281,9 @@
 
   <repositories>
     <repository>
-        <id>nxt</id>
+        <id>ossrh</id>
         <name>NXT Mobility Nexus</name>
-        <url>https://nexus.imobility.azure.altemista.cloud/content/repositories/nxt-snapshots</url>
+        <url>https://oss.sonatype.org/content/repositories/snapshots</url>
       <releases>
         <enabled>false</enabled>
       </releases>
@@ -295,12 +295,12 @@
 
   <distributionManagement>
     <snapshotRepository>
-        <id>nxt</id>
-        <url>https://nexus.imobility.azure.altemista.cloud/content/repositories/nxt-snapshots/</url>
+        <id>ossrh</id>
+        <url>https://oss.sonatype.org/content/repositories/snapshots</url>
     </snapshotRepository>
     <repository>
-        <id>nxt</id>
-        <url>https://nexus.imobility.azure.altemista.cloud/content/repositories/nxt-releases/</url>
+        <id>ossrh</id>
+        <url>https://oss.sonatype.org/service/local/staging/deploy/maven2</url>
     </repository>
   </distributionManagement>
 
