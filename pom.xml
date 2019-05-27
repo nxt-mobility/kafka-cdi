@@ -27,7 +27,7 @@
 
     <groupId>cloud.nxt-mobility</groupId>
   <artifactId>kafka-cdi-extension</artifactId>
-  <version>0.1.8</version>
+  <version>0.1.9-SNAPSHOT</version>
   <packaging>jar</packaging>
   <name>kafka-cdi</name>
   <description>Simple CDI extension for Apache Kafka</description>
