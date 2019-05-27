@@ -27,7 +27,7 @@
 
     <groupId>cloud.nxt-mobility</groupId>
   <artifactId>kafka-cdi-extension</artifactId>
-  <version>0.1.9-SNAPSHOT</version>
+  <version>0.1.8</version>
   <packaging>jar</packaging>
   <name>kafka-cdi</name>
   <description>Simple CDI extension for Apache Kafka</description>
@@ -36,7 +36,7 @@
       <connection>scm:git:https://github.com/nxt-mobility/kafka-cdi.git</connection>
       <developerConnection>scm:git:git@gitlab.com:nxt-mobility/nxt-infrastructure/kafka-cdi.git</developerConnection>
       <url>https://github.com/nxt-mobility/kafka-cdi</url>
-    <tag>HEAD</tag>
+    <tag>kafka-cdi-extension-0.1.8</tag>
   </scm>
 
   <licenses>
