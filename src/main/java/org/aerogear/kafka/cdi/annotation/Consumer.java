@@ -58,4 +58,6 @@ public @interface Consumer {
      * Represents the kafka configuration property <code>request.timeout.ms</code>. The default value for all consumers can be configured with {@link KafkaConfig#defaultRequestTimeoutMs()}.
      */
     int requestTimeoutMs() default -1;
+
+    String threads() default "1";
 }

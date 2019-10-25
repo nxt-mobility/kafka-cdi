@@ -115,6 +115,7 @@ public class KafkaExtension<X> implements Extension {
         logger.debug("wiring annotated methods to internal Kafka Util clazzes");
 
         listenerMethods.forEach(consumerMethod -> {
+            Consumer consumer = consumerMethod.getAnnotation(Consumer.class);
 
             final Bean<DelegationKafkaConsumer> bean = (Bean<DelegationKafkaConsumer>) bm.getBeans(DelegationKafkaConsumer.class).iterator().next();
             final CreationalContext<DelegationKafkaConsumer> ctx = bm.createCreationalContext(bean);
@@ -124,7 +125,7 @@ public class KafkaExtension<X> implements Extension {
             frameworkConsumer.initialize(bootstrapServers, consumerMethod, bm, kafkaConfig);
 
             managedConsumers.add(frameworkConsumer);
-            submitToExecutor(frameworkConsumer);
+            submitToExecutor(frameworkConsumer, getNumberOfThreads(consumer));
         });
 
 
@@ -217,7 +218,16 @@ public class KafkaExtension<X> implements Extension {
         pit.setInjectionTarget(wrapped);
     }
 
-    private void submitToExecutor(final DelegationKafkaConsumer delegationKafkaConsumer) {
+    private int getNumberOfThreads(Consumer consumer) {
+        if (consumer.threads().isEmpty()) {
+            return 1;
+        }
+        int threads = Integer.parseInt(VerySimpleEnvironmentResolver.resolveVariables(consumer.threads()));
+        return Math.max(1, threads);
+
+    }
+
+    private void submitToExecutor(final DelegationKafkaConsumer delegationKafkaConsumer, int threads) {
 
         ExecutorService executorService;
         try {
@@ -227,8 +237,10 @@ public class KafkaExtension<X> implements Extension {
             executorService = new ThreadPoolExecutor(16, 16, 10, TimeUnit.MINUTES, new LinkedBlockingDeque<Runnable>());
         }
 
-        // submit the consumer
-        executorService.execute(delegationKafkaConsumer);
+        for (int i = 0; i < threads; i++) {
+            // submit the consumer
+            executorService.execute(delegationKafkaConsumer);
+        }
     }
 
     private org.apache.kafka.clients.producer.Producer createInjectionProducer(final String bootstrapServers, final Class<?> keySerializerClass, final Class<?> valSerializerClass, final Serializer<?> keySerializer, final Serializer<?> valSerializer, final Producer annotation) {
